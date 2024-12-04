@@ -15,7 +15,7 @@ class PixelType(enum.Enum):
         self.b = b
         self.id = id
     
-    SAND = (150, 100, 100, 1)
+    SAND = (194, 178, 128, 1)
     AIR = (0, 0, 0, 2)
 
 class Pixel:
@@ -23,12 +23,14 @@ class Pixel:
         self.x: float = x
         self.y: float = y
         self.type: PixelType = type
+        self.velocity: float = 0
 
     def draw(self, screen):
         pygame.draw.rect(screen, (self.type.r, self.type.g, self.type.b), (self.x, self.y, 1, 1))
     def draw(self, screen, size):
         pygame.draw.rect(screen, (self.type.r, self.type.g, self.type.b), (self.x, self.y, size, size))
-    
+
     def update(self, deltaTime, pixels):
         if self.type == PixelType.SAND:
-            self.y += deltaTime * 9.81
+            self.velocity += deltaTime * 9.81 * 10
+            self.y += + self.velocity * deltaTime
