@@ -33,23 +33,35 @@ class Pixel:
     def update(self, deltaTime, pixels):
         if self.type == PixelType.SAND:
             self.velocity += deltaTime * 9.81 * 10
-            self.y += self.velocity * deltaTime
+            newY = self.y + self.velocity * deltaTime
+            deltaY = newY - self.y
+            self.y = newY
             y = math.floor(self.y)
-            self.handleSpace(pixels, y)
+            self.handleSpace(pixels, y, deltaY)
 
-    def handleSpace(self, pixels, y):
-        if self.velocity > 0: 
-            if y < 0 or y >= 599:
-                self.velocity = 0
-                self.y = 599
-                return
+    def handleSpace(self, pixels, y, deltaY):
+        if self.velocity > 0 and y < 0 or y >= 599:
+            self.velocity = 0
+            self.y = 599
+            return
+        if math.floor(deltaY) > 1: 
+            for i in range(math.floor(deltaY), -1, -1):
+                if (self.x, y - i) in pixels and (pixels.get((self.x, y - i)).velocity == 0 or pixels.get((self.x, y - i)).type == PixelType.STONE):
+                    self.checkDownwardPixelsAndHandleAccordingly(pixels, y - i - 1)
+                    break
+            return
+        else:
+            self.checkDownwardPixelsAndHandleAccordingly(pixels, y)
+            return
+            
+    def checkDownwardPixelsAndHandleAccordingly(self, pixels, y):
         hasAPixelDown = (self.x, y + 1) in pixels and (pixels.get((self.x, y + 1)).velocity == 0 or pixels.get((self.x, y + 1)).type == PixelType.STONE)
         if hasAPixelDown: 
-            hasAPixelDownLeft = (self.x - 1, y + 1) in pixels and pixels.get((self.x - 1, y + 1)).velocity == 0
-            hasAPixelDownRight = (self.x + 1, y + 1) in pixels and pixels.get((self.x + 1, y + 1)).velocity == 0
+            hasAPixelDownLeft = (self.x - 1, y + 1) in pixels and (pixels.get((self.x - 1, y + 1)).velocity == 0 or pixels.get((self.x - 1, y + 1)).type == PixelType.STONE)
+            hasAPixelDownRight = (self.x + 1, y + 1) in pixels and (pixels.get((self.x + 1, y + 1)).velocity == 0 or pixels.get((self.x + 1, y + 1)).type == PixelType.STONE)
             if hasAPixelDown:
                 if not hasAPixelDownLeft and not hasAPixelDownRight:
-                    self.velocity / 2
+                    self.velocity /= 2
                     l = random.choice([-1, 1])
                     self.x += l
                     return
