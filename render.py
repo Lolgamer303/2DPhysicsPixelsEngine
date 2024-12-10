@@ -9,8 +9,7 @@ def render(screen: pygame.Surface, pixels: Dict[Tuple[int, int], Pixel], deltaTi
     updated_pixels = {}
     for pixel in pixels.values():
         pixel.update(deltaTime, pixels)
-        pixel.draw(screen, 10)
+        pixel.draw(screen, 1)
         updated_pixels[(int(pixel.x), int(pixel.y))] = pixel
-        print(pixel.velocity)
     pixels.clear()
     pixels.update(updated_pixels)

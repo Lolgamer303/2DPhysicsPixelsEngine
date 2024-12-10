@@ -34,3 +34,7 @@ class Pixel:
         if self.type == PixelType.SAND:
             self.velocity += deltaTime * 9.81 * 10
             self.y += + self.velocity * deltaTime
+            if self.y > 600:
+                self.y = 599
+                self.velocity = 0
+                return
