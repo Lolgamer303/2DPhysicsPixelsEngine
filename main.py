@@ -14,7 +14,7 @@ def main():
 
     SPAWN_SIZE = 0
 
-    pixels = {}
+    pixels: dict = {}
 
     def get_mouse_coords():
         x, y = mouse.get_pos()

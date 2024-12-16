@@ -3,6 +3,7 @@ import pygame
 import enum
 import math
 import random
+import time
 
 class PixelType(enum.Enum):
 
@@ -21,6 +22,7 @@ class PixelType(enum.Enum):
     STONE = (100, 100, 100, 2)
 
 class Pixel:
+    
     def __init__(self, x, y, type: PixelType):
         self.x: float = x
         self.y: float = y
@@ -32,48 +34,57 @@ class Pixel:
 
     def update(self, deltaTime, pixels):
         if self.type == PixelType.SAND:
-            self.velocity += deltaTime * 9.81 * 10
-            newY = self.y + self.velocity * deltaTime
-            deltaY = newY - self.y
-            self.y = newY
-            y = math.floor(self.y)
-            self.handleSpace(pixels, y, deltaY)
-
-    def handleSpace(self, pixels, y, deltaY):
-        if self.velocity > 0 and y < 0 or y >= 599:
-            self.velocity = 0
-            self.y = 599
-            return
-        if math.floor(deltaY) > 1: 
-            for i in range(math.floor(deltaY), -1, -1):
-                if (self.x, y - i) in pixels and (pixels.get((self.x, y - i)).velocity == 0 or pixels.get((self.x, y - i)).type == PixelType.STONE):
-                    self.checkDownwardPixelsAndHandleAccordingly(pixels, y - i - 1)
-                    break
-            return
-        else:
-            self.checkDownwardPixelsAndHandleAccordingly(pixels, y)
-            return
-            
-    def checkDownwardPixelsAndHandleAccordingly(self, pixels, y):
-        hasAPixelDown = (self.x, y + 1) in pixels and (pixels.get((self.x, y + 1)).velocity == 0 or pixels.get((self.x, y + 1)).type == PixelType.STONE)
-        if hasAPixelDown: 
-            hasAPixelDownLeft = (self.x - 1, y + 1) in pixels and (pixels.get((self.x - 1, y + 1)).velocity == 0 or pixels.get((self.x - 1, y + 1)).type == PixelType.STONE)
-            hasAPixelDownRight = (self.x + 1, y + 1) in pixels and (pixels.get((self.x + 1, y + 1)).velocity == 0 or pixels.get((self.x + 1, y + 1)).type == PixelType.STONE)
-            if hasAPixelDown:
-                if not hasAPixelDownLeft and not hasAPixelDownRight:
-                    self.velocity /= 2
-                    l = random.choice([-1, 1])
-                    self.x += l
-                    return
-                if not hasAPixelDownRight:
-                    self.velocity /= 2
-                    self.x += 1
-                    return
-                elif not hasAPixelDownLeft:
-                    self.velocity /= 2
-                    self.x -= 1
-                    return
-                else:
+            if self.velocity == 0:
+                self.checkForUpdatedSpaces(pixels)
+            else: 
+                self.velocity = self.velocity + 9.81 * deltaTime
+                newY = self.y + self.velocity * deltaTime * 100
+                step = newY // 1 - self.y // 1
+                if step > 0:
+                    for x in range(int(step)):
+                        if (self.x, math.floor(self.y) + x + 1) in pixels and pixels.get((self.x, math.floor(self.y) + x + 1)).velocity == 0:
+                            self.checkForSpaces(x+1, pixels)
+                            return
+                self.y = newY
+                if self.y > 599:
                     self.velocity = 0
-                    self.y = y
-                    return
+                    self.y = 599
+        elif self.type == PixelType.STONE:
+            self.velocity = 0
+
+    def checkForSpaces(self, x, pixels):
+        pixelLoc = int(self.y // 1 + x)
+        downLeft = (self.x - 1, pixelLoc) in pixels and pixels.get((self.x - 1, pixelLoc)).velocity == 0
+        downRight = (self.x + 1, pixelLoc) in pixels and pixels.get((self.x + 1, pixelLoc)).velocity == 0
+        if not downLeft and not downRight:
+            self.x = self.x + random.choice([1, -1])
+            self.y = pixelLoc - 1
+        elif not downLeft:
+            self.x = self.x - 1
+            self.y = pixelLoc - 1
+        elif not downRight:
+            self.x = self.x + 1
+            self.y = pixelLoc - 1
+        else:
+            self.velocity = 0
+            self.y = pixelLoc - 1
+
+    def checkForUpdatedSpaces(self, pixels):
+        if (self.x, self.y + 1) in pixels and pixels.get((self.x, self.y + 1)).velocity == 0:
+            downLeft = (self.x - 1, self.y + 1) in pixels and pixels.get((self.x - 1, self.y + 1)).velocity == 0
+            downRight = (self.x + 1, self.y + 1) in pixels and pixels.get((self.x + 1, self.y + 1)).velocity == 0
+            if not downLeft and not downRight:
+                self.x += random.choice([1,-1])
+                self.y += 1
+            elif not downLeft:
+                self.x -= 1
+                self.y += 1
+            elif not downRight:
+                self.x += 1
+                self.y += 1
+        else:
+            self.velocity = 0.01
+
+            
+
+
