@@ -5,11 +5,11 @@ from time import sleep
 
 from typing import Dict, Tuple
 
-def render(screen: pygame.Surface, pixels: Dict[Tuple[int, int], Pixel], deltaTime: float):
+def render(screen: pygame.Surface, pixels: Dict[Tuple[int, int], Pixel], deltaTime: float, pixelsSize):
     updated_pixels = {}
     for pixel in pixels.values():
         pixel.update(deltaTime, pixels)
-        pixel.draw(screen, 1)
+        pixel.draw(screen, pixelsSize)
         updated_pixels[(int(pixel.x), int(pixel.y))] = pixel
     pixels.clear()
     pixels.update(updated_pixels)

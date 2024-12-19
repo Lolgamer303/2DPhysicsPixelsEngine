@@ -1,6 +1,6 @@
-x = 2.9
-y = 3.1
-step = y // 1 - x // 1
-print(step)
-for x in range(int(step)):
-    print(x)
+x = {}
+x[(1,1)] = 2
+x[(6,6)] = 3
+x[(2,2)] = 4
+for key in x:
+    print(key)
