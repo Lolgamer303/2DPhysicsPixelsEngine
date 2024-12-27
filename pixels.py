@@ -3,6 +3,10 @@ import pygame
 import enum
 import math
 import random
+import os
+
+HEIGHT = 199
+WIDTH = 199
 
 class PixelType(enum.Enum):
     def __new__(cls, *args, **kwds):
@@ -28,7 +32,7 @@ class Pixel:
         self.velocity: float = 0.01
 
     def draw(self, screen, size=1):
-        pygame.draw.rect(screen, (self.type.r, self.type.g, self.type.b), (self.x, self.y, size, size))
+        pygame.draw.rect(screen, (self.type.r, self.type.g, self.type.b), (self.x * size, self.y * size, size, size))
 
     def update(self, deltaTime, pixels):
         if self.type == PixelType.SAND:
@@ -44,23 +48,21 @@ class Pixel:
                             self.checkForSpaces(i + 1, pixels)
                             return
                 self.y = newY
-                if self.y >= 598:
+                if self.y > HEIGHT:
                     self.velocity = 0
-                    self.y = 598
-        elif self.type == PixelType.STONE:
-            self.velocity = 0
+                    self.y = HEIGHT
 
     def checkForSpaces(self, step, pixels):
         pixelLoc = int(self.y) + step
         downLeft = (self.x - 1, pixelLoc) in pixels and pixels[(self.x - 1, pixelLoc)].velocity == 0
         downRight = (self.x + 1, pixelLoc) in pixels and pixels[(self.x + 1, pixelLoc)].velocity == 0
-        if not downLeft and not downRight and 1 <= self.x <= 798:
+        if not downLeft and not downRight and 1 <= self.x < WIDTH:
             self.x += random.choice([1, -1])
             self.y = pixelLoc
         elif not downLeft and self.x >= 1:
             self.x -= 1
             self.y = pixelLoc
-        elif not downRight and self.x <= 798:
+        elif not downRight and self.x < WIDTH:
             self.x += 1
             self.y = pixelLoc
         else:
@@ -71,14 +73,14 @@ class Pixel:
         if (self.x, self.y + 1) in pixels and pixels[(self.x, self.y + 1)].velocity == 0:
             downLeft = (self.x - 1, self.y + 1) in pixels and pixels[(self.x - 1, self.y + 1)].velocity == 0
             downRight = (self.x + 1, self.y + 1) in pixels and pixels[(self.x + 1, self.y + 1)].velocity == 0
-            if not downLeft and not downRight and 1 <= self.x <= 798:
+            if not downLeft and not downRight and 1 <= self.x < WIDTH:
                 self.x += random.choice([1, -1])
                 self.y += 1
             elif not downLeft and self.x >= 1:
                 self.x -= 1
                 self.y += 1
-            elif not downRight and self.x <= 798:
+            elif not downRight and self.x < WIDTH:
                 self.x += 1
                 self.y += 1
-        elif self.y < 598:
+        elif self.y < HEIGHT:
             self.velocity = 0.01
