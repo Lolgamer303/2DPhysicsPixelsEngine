@@ -5,9 +5,6 @@ import math
 import random
 import os
 
-HEIGHT = 199
-WIDTH = 199
-
 class PixelType(enum.Enum):
     def __new__(cls, *args, **kwds):
         value = len(cls.__members__) + 1
@@ -34,10 +31,10 @@ class Pixel:
     def draw(self, screen, size=1):
         pygame.draw.rect(screen, (self.type.r, self.type.g, self.type.b), (self.x * size, self.y * size, size, size))
 
-    def update(self, deltaTime, pixels):
+    def update(self, deltaTime, pixels, w, h):
         if self.type == PixelType.SAND:
             if self.velocity == 0:
-                self.checkForUpdatedSpaces(pixels)
+                self.checkForUpdatedSpaces(pixels, w, h)
             else:
                 self.velocity += 9.81 * deltaTime
                 newY = self.y + self.velocity * deltaTime * 100
@@ -45,42 +42,42 @@ class Pixel:
                 if step > 0:
                     for i in range(step):
                         if (self.x, int(self.y) + i + 1) in pixels and pixels[(self.x, int(self.y) + i + 1)].velocity == 0:
-                            self.checkForSpaces(i + 1, pixels)
+                            self.checkForSpaces(i + 1, pixels, w)
                             return
                 self.y = newY
-                if self.y > HEIGHT:
+                if self.y > h:
                     self.velocity = 0
-                    self.y = HEIGHT
+                    self.y = h
 
-    def checkForSpaces(self, step, pixels):
+    def checkForSpaces(self, step, pixels, w):
         pixelLoc = int(self.y) + step
         downLeft = (self.x - 1, pixelLoc) in pixels and pixels[(self.x - 1, pixelLoc)].velocity == 0
         downRight = (self.x + 1, pixelLoc) in pixels and pixels[(self.x + 1, pixelLoc)].velocity == 0
-        if not downLeft and not downRight and 1 <= self.x < WIDTH:
+        if not downLeft and not downRight and 1 <= self.x < w:
             self.x += random.choice([1, -1])
             self.y = pixelLoc
         elif not downLeft and self.x >= 1:
             self.x -= 1
             self.y = pixelLoc
-        elif not downRight and self.x < WIDTH:
+        elif not downRight and self.x < w:
             self.x += 1
             self.y = pixelLoc
         else:
             self.velocity = 0
             self.y = pixelLoc - 1
 
-    def checkForUpdatedSpaces(self, pixels):
+    def checkForUpdatedSpaces(self, pixels, w, h):
         if (self.x, self.y + 1) in pixels and pixels[(self.x, self.y + 1)].velocity == 0:
             downLeft = (self.x - 1, self.y + 1) in pixels and pixels[(self.x - 1, self.y + 1)].velocity == 0
             downRight = (self.x + 1, self.y + 1) in pixels and pixels[(self.x + 1, self.y + 1)].velocity == 0
-            if not downLeft and not downRight and 1 <= self.x < WIDTH:
+            if not downLeft and not downRight and 1 <= self.x < w:
                 self.x += random.choice([1, -1])
                 self.y += 1
             elif not downLeft and self.x >= 1:
                 self.x -= 1
                 self.y += 1
-            elif not downRight and self.x < WIDTH:
+            elif not downRight and self.x < w:
                 self.x += 1
                 self.y += 1
-        elif self.y < HEIGHT:
+        elif self.y < h:
             self.velocity = 0.01

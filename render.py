@@ -10,8 +10,10 @@ def render(screen: pygame.Surface, pixels: Dict[Tuple[int, int], Pixel], deltaTi
     obj = ConfigParser()
     obj.read('config.ini')
     pixelsSize = int((obj['PIXEL_SIZE'])['value'])
+    w = int((obj['SIZE'])['width'])
+    h = int((obj['SIZE'])['height'])
     for pixel in pixels.values():
-        pixel.update(deltaTime, pixels)
+        pixel.update(deltaTime, pixels, w, h)
         pixel.draw(screen, pixelsSize)
         updated_pixels[(int(pixel.x), int(pixel.y))] = pixel
     pixels.clear()
