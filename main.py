@@ -27,6 +27,13 @@ def modifyPixelSize(value, config_obj: ConfigParser):
     }
     with open('config.ini', 'w') as conf:
         config_obj.write(conf)
+def modifyRainbowMode(config_obj: ConfigParser):
+    config_obj.read("config.ini")
+    config_obj["RAINBOW_MODE"] = {
+        'value': 'True' if str(config_obj["RAINBOW_MODE"]['value']) == 'False' else 'True',
+    }
+    with open('config.ini', 'w') as conf:
+        config_obj.write(conf)
 
 def get_mouse_coords():
     x, y = mouse.get_pos()
@@ -38,6 +45,11 @@ def main():
     config_obj = ConfigParser()
     modifySpawnSize(5, config_obj)
     modifyPixelSize(4, config_obj)
+    config_obj["RAINBOW_MODE"] = {
+        'value': 'False',
+    }
+    with open('config.ini', 'w') as conf:
+        config_obj.write(conf)
     manager = pygame_gui.UIManager((1000, 800), theme_path='theme.json')
     display.set_caption("Pixel Physics Engine")
     clock = pygame.time.Clock()
@@ -82,22 +94,29 @@ def main():
         html_text="<b>0 FPS</b>",
         manager=manager,
     )
+    rainbowmode_toggle = pygame_gui.elements.UIButton(
+        relative_rect=Rect((840, 500), (120, 40)),
+        text="Rainbow Mode",
+        manager=manager,
+    )
     
     pixels = SortedDict(lambda key: (-key[1], -key[0]))
 
     COOLDOWN = 0.05
     def handle_mouse_press(deltaTime: float):
-        nonlocal currentTime
+        nonlocal currentTimeCoolDown
+        nonlocal runningTime
+        runningTime += deltaTime
         nonlocal confirmation_dialog
         if confirmation_dialog is not None:
             return
-        currentTime += deltaTime
+        currentTimeCoolDown += deltaTime
         obj = ConfigParser()
         obj.read("config.ini")
         spawn_size = int((obj['SPAWN_SIZE'])['value'])
         pixel_size = int((obj['PIXEL_SIZE'])['value'])
-        if currentTime > COOLDOWN + COOLDOWN / 2 * spawn_size and (mouse.get_pressed()[0] or mouse.get_pressed()[2]):
-            currentTime = 0
+        if currentTimeCoolDown > COOLDOWN + COOLDOWN / 2 * spawn_size and (mouse.get_pressed()[0] or mouse.get_pressed()[2]):
+            currentTimeCoolDown = 0
             x, y = get_mouse_coords()
             if x < 0 or x > 800:
                 return
@@ -106,7 +125,7 @@ def main():
             if mouse.get_pressed()[0]:    
                 for i in range(-spawn_size, spawn_size + 1):
                     for j in range(-spawn_size, spawn_size + 1):
-                        pixels[x + i, y + j] = Pixel(x + i , y + j, PixelType.SAND)
+                        pixels[x + i, y + j] = Pixel(x + i , y + j, PixelType.SAND, rainbowHue=(runningTime/5)%1)
             if mouse.get_pressed()[2]:
                 for i in range(-spawn_size-2, spawn_size + 2):
                     for j in range(-spawn_size-2, spawn_size + 2):
@@ -125,9 +144,10 @@ def main():
     running = True
     confirmation_dialog = None
     previous_pixel_size = pixel_slider.get_current_value()
-    currentTime = 0
+    currentTimeCoolDown = 0
     paused = False
     next_frame = False
+    runningTime = 0
     while running:
             start_time = time.time()
             time_delta = clock.tick(120)/1000.0
@@ -157,6 +177,8 @@ def main():
                     elif e.ui_element == next_frame_button:
                         if paused:
                             next_frame = True
+                    elif e.ui_element == rainbowmode_toggle:
+                        modifyRainbowMode(config_obj)                        
             manager.update(time_delta)
             handle_mouse_press(time_delta)
             screen.fill((20, 20, 20))

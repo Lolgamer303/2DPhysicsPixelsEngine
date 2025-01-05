@@ -3,7 +3,7 @@ import pygame
 import enum
 import math
 import random
-import os
+import colorsys
 
 class PixelType(enum.Enum):
     def __new__(cls, *args, **kwds):
@@ -22,13 +22,19 @@ class PixelType(enum.Enum):
     STONE = (100, 100, 100, 2)
 
 class Pixel:
-    def __init__(self, x, y, type: PixelType):
+    def __init__(self, x, y, type: PixelType, rainbowHue=None):
         self.x: float = x
         self.y: float = y
         self.type: PixelType = type
         self.velocity: float = 0.01
+        self.rainbowHue: float = rainbowHue
 
-    def draw(self, screen, size=1):
+    def draw(self, screen, size=1, rainbowMode=False):
+        if rainbowMode and self.rainbowHue is not None:
+            rgb = colorsys.hls_to_rgb(self.rainbowHue, 0.5, 1.0)
+            rgb = tuple(int(c * 255) for c in rgb)
+            pygame.draw.rect(screen, rgb, (self.x * size, self.y * size, size, size))
+            return
         pygame.draw.rect(screen, (self.type.r, self.type.g, self.type.b), (self.x * size, self.y * size, size, size))
 
     def update(self, deltaTime, pixels, w, h):
