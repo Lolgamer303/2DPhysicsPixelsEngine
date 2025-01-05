@@ -15,7 +15,8 @@ def render(screen: pygame.Surface, pixels: Dict[Tuple[int, int], Pixel], deltaTi
     for pixel in pixels.values():
         pixel.update(deltaTime, pixels, w, h)
         pixel.draw(screen, pixelsSize)
-        updated_pixels[(int(pixel.x), int(pixel.y))] = pixel
+        if not pixel.x > w and not pixel.x < 0:
+            updated_pixels[(int(pixel.x), int(pixel.y))] = pixel
     pixels.clear()
     pixels.update(updated_pixels)
     return pixels

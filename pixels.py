@@ -79,5 +79,5 @@ class Pixel:
             elif not downRight and self.x < w:
                 self.x += 1
                 self.y += 1
-        elif self.y < h:
+        elif self.y < h :
             self.velocity = 0.01
