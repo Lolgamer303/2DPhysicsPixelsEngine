@@ -30,7 +30,7 @@ def modifyPixelSize(value, config_obj: ConfigParser):
 def modifyRainbowMode(config_obj: ConfigParser):
     config_obj.read("config.ini")
     config_obj["RAINBOW_MODE"] = {
-        'value': 'True' if str(config_obj["RAINBOW_MODE"]['value']) == 'False' else 'True',
+        'value': 'True' if str(config_obj["RAINBOW_MODE"]['value']) == 'False' else 'False',
     }
     with open('config.ini', 'w') as conf:
         config_obj.write(conf)
@@ -115,22 +115,26 @@ def main():
         obj.read("config.ini")
         spawn_size = int((obj['SPAWN_SIZE'])['value'])
         pixel_size = int((obj['PIXEL_SIZE'])['value'])
-        if currentTimeCoolDown > COOLDOWN + COOLDOWN / 2 * spawn_size and (mouse.get_pressed()[0] or mouse.get_pressed()[2]):
+        if currentTimeCoolDown > COOLDOWN + COOLDOWN / 2 * spawn_size and (mouse.get_pressed()[0]):
             currentTimeCoolDown = 0
             x, y = get_mouse_coords()
             if x < 0 or x > 800:
                 return
             x = int(x/pixel_size)
             y = int(y/pixel_size)
-            if mouse.get_pressed()[0]:    
-                for i in range(-spawn_size, spawn_size + 1):
-                    for j in range(-spawn_size, spawn_size + 1):
-                        pixels[x + i, y + j] = Pixel(x + i , y + j, PixelType.SAND, rainbowHue=(runningTime/5)%1)
-            if mouse.get_pressed()[2]:
-                for i in range(-spawn_size-2, spawn_size + 2):
-                    for j in range(-spawn_size-2, spawn_size + 2):
-                        pixels[(x + i, y + j)] = Pixel(x + i, y + j, PixelType.STONE)
-                        pixels[(x + i, y + j)].velocity = 0
+            for i in range(-spawn_size, spawn_size + 1):
+                for j in range(-spawn_size, spawn_size + 1):
+                    pixels[x + i, y + j] = Pixel(x + i , y + j, PixelType.SAND, rainbowHue=(runningTime/12)%1)
+        elif mouse.get_pressed()[2]:
+            x, y = get_mouse_coords()
+            if x < 0 or x > 800:
+                return
+            x = int(x/pixel_size)
+            y = int(y/pixel_size)
+            for i in range(-spawn_size-2, spawn_size + 2):
+                for j in range(-spawn_size-2, spawn_size + 2):
+                    pixels[(x + i, y + j)] = Pixel(x + i, y + j, PixelType.STONE)
+                    pixels[(x + i, y + j)].velocity = 0
     def show_confirmation_dialog():
         return pygame_gui.windows.UIConfirmationDialog(
             rect=Rect((400, 300), (200, 200)),
@@ -187,7 +191,7 @@ def main():
             if next_frame and paused:
                 time_delta = clock.tick(120)/1000.0
                 next_frame = False
-            render.render(screen, pixels=pixels, deltaTime=time_delta)
+            render.render(screen, pixels=pixels, deltaTime=time_delta, runningTime=runningTime)
             screen.fill((40, 40, 40), Rect(800, 0, 200, 800))
             manager.draw_ui(screen)
             display.flip()

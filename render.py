@@ -5,7 +5,7 @@ from time import sleep
 from configparser import ConfigParser
 from typing import Dict, Tuple
 
-def render(screen: pygame.Surface, pixels: Dict[Tuple[int, int], Pixel], deltaTime: float):
+def render(screen: pygame.Surface, pixels: Dict[Tuple[int, int], Pixel], deltaTime: float, runningTime: float):
     updated_pixels = {}
     obj = ConfigParser()
     obj.read('config.ini')
@@ -15,7 +15,7 @@ def render(screen: pygame.Surface, pixels: Dict[Tuple[int, int], Pixel], deltaTi
     rainbowMode = True if (obj['RAINBOW_MODE'])['value'] == 'True' else False
     for pixel in pixels.values():
         pixel.update(deltaTime, pixels, w, h)
-        pixel.draw(screen, pixelsSize, rainbowMode)
+        pixel.draw(screen, pixelsSize, rainbowMode, runningTime)
         if not pixel.x > w and not pixel.x < 0:
             updated_pixels[(int(pixel.x), int(pixel.y))] = pixel
     pixels.clear()

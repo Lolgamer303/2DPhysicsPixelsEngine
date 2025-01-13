@@ -29,13 +29,18 @@ class Pixel:
         self.velocity: float = 0.01
         self.rainbowHue: float = rainbowHue
 
-    def draw(self, screen, size=1, rainbowMode=False):
+    def draw(self, screen, size=1, rainbowMode=False, runningTime=0):
         if rainbowMode and self.rainbowHue is not None:
             rgb = colorsys.hls_to_rgb(self.rainbowHue, 0.5, 1.0)
             rgb = tuple(int(c * 255) for c in rgb)
             pygame.draw.rect(screen, rgb, (self.x * size, self.y * size, size, size))
             return
-        pygame.draw.rect(screen, (self.type.r, self.type.g, self.type.b), (self.x * size, self.y * size, size, size))
+        elif rainbowMode and self.type == PixelType.STONE:
+            rgb = colorsys.hls_to_rgb((runningTime / 10) % 1, 0.5, 1.0)
+            rgb = tuple(int(c * 255) for c in rgb)
+            pygame.draw.rect(screen, rgb, (self.x * size, self.y * size, size, size))
+            return
+        pygame.draw.rect(screen, (self.type.r + 10 - (self.y / 5), self.type.g + 10 - (self.y / 5), self.type.b + 10 - (self.y / 5)), (self.x * size, self.y * size, size, size))
 
     def update(self, deltaTime, pixels, w, h):
         if self.type == PixelType.SAND:
