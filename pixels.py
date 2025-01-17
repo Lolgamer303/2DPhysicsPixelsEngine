@@ -1,9 +1,9 @@
 import numpy as np
 import pygame
 import enum
-import math
 import random
 import colorsys
+from typing import Dict, Tuple
 
 class PixelType(enum.Enum):
     def __new__(cls, *args, **kwds):
@@ -40,42 +40,48 @@ class Pixel:
             rgb = tuple(int(c * 255) for c in rgb)
             pygame.draw.rect(screen, rgb, (self.x * size, self.y * size, size, size))
             return
-        pygame.draw.rect(screen, (self.type.r + 10 - (self.y / 5), self.type.g + 10 - (self.y / 5), self.type.b + 10 - (self.y / 5)), (self.x * size, self.y * size, size, size))
+        pygame.draw.rect(screen, (self.type.r, self.type.g, self.type.b), (self.x * size, self.y * size, size, size))
 
-    def update(self, deltaTime, pixels, w, h):
+    def update(self, deltaTime, pixels: Dict[Tuple[int, int], any], w, h, key):
         if self.type == PixelType.SAND:
             if self.velocity == 0:
                 self.checkForUpdatedSpaces(pixels, w, h)
             else:
                 self.velocity += 9.81 * deltaTime
-                newY = self.y + self.velocity * deltaTime * 100
+                newY = self.y + self.velocity * abs(deltaTime) * 100
                 step = int(newY) - int(self.y)
                 if step > 0:
                     for i in range(step):
                         if (self.x, int(self.y) + i + 1) in pixels and pixels[(self.x, int(self.y) + i + 1)].velocity == 0:
-                            self.checkForSpaces(i + 1, pixels, w)
+                            self.checkForSpaces(i + 1, pixels, w, key)
                             return
                 self.y = newY
                 if self.y > h:
                     self.velocity = 0
                     self.y = h
+                    print('Pixel has reached the bottom of the screen ' + str(key))
 
-    def checkForSpaces(self, step, pixels, w):
+    def checkForSpaces(self, step, pixels, w, key):
+        print('Checking for spaces, pixel at the bottom step :' + str(step))
         pixelLoc = int(self.y) + step
         downLeft = (self.x - 1, pixelLoc) in pixels and pixels[(self.x - 1, pixelLoc)].velocity == 0
         downRight = (self.x + 1, pixelLoc) in pixels and pixels[(self.x + 1, pixelLoc)].velocity == 0
         if not downLeft and not downRight and 1 <= self.x < w:
             self.x += random.choice([1, -1])
             self.y = pixelLoc
+            print('Pixel going down either choices' + str(key))
         elif not downLeft and self.x >= 1:
             self.x -= 1
             self.y = pixelLoc
+            print('Pixel going down left ' + str(key))
         elif not downRight and self.x < w:
             self.x += 1
             self.y = pixelLoc
+            print('Pixel going down right ' + str(key))
         else:
             self.velocity = 0
             self.y = pixelLoc - 1
+            print('Pixel stopping at ' + str(key))
 
     def checkForUpdatedSpaces(self, pixels, w, h):
         if (self.x, self.y + 1) in pixels and pixels[(self.x, self.y + 1)].velocity == 0:

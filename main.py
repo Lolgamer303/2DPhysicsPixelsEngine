@@ -150,7 +150,7 @@ def main():
     previous_pixel_size = pixel_slider.get_current_value()
     currentTimeCoolDown = 0
     paused = False
-    next_frame = False
+    next_frame = False  
     runningTime = 0
     while running:
             start_time = time.time()
