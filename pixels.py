@@ -20,6 +20,7 @@ class PixelType(enum.Enum):
 
     SAND = (194, 178, 128, 1)
     STONE = (100, 100, 100, 2)
+    WATER = (0, 0, 255, 3)
 
 class Pixel:
     def __init__(self, x, y, type: PixelType, rainbowHue=None):
@@ -28,19 +29,20 @@ class Pixel:
         self.type: PixelType = type
         self.velocity: float = 0.01
         self.rainbowHue: float = rainbowHue
+        self.sliding: bool = False
 
     def draw(self, screen, size=1, rainbowMode=False, runningTime=0):
-        if rainbowMode and self.rainbowHue is not None:
-            rgb = colorsys.hls_to_rgb(self.rainbowHue, 0.5, 1.0)
-            rgb = tuple(int(c * 255) for c in rgb)
+        if rainbowMode:
+            if self.rainbowHue is not None:
+                rgb = colorsys.hls_to_rgb(self.rainbowHue, 0.5, 1.0)
+                rgb = tuple(int(c * 255) for c in rgb)
+                pygame.draw.rect(screen, rgb, (self.x * size, self.y * size, size, size))
+            elif self.type == PixelType.STONE:
+                rgb = colorsys.hls_to_rgb((runningTime / 10) % 1, 0.5, 1.0)
+                rgb = tuple(int(c * 255) for c in rgb)
             pygame.draw.rect(screen, rgb, (self.x * size, self.y * size, size, size))
-            return
-        elif rainbowMode and self.type == PixelType.STONE:
-            rgb = colorsys.hls_to_rgb((runningTime / 10) % 1, 0.5, 1.0)
-            rgb = tuple(int(c * 255) for c in rgb)
-            pygame.draw.rect(screen, rgb, (self.x * size, self.y * size, size, size))
-            return
-        pygame.draw.rect(screen, (self.type.r, self.type.g, self.type.b), (self.x * size, self.y * size, size, size))
+        else:
+            pygame.draw.rect(screen, (self.type.r, self.type.g, self.type.b), (self.x * size, self.y * size, size, size))
 
     def update(self, deltaTime, pixels: Dict[Tuple[int, int], any], w, h, key):
         if self.type == PixelType.SAND:
@@ -52,49 +54,75 @@ class Pixel:
                 step = int(newY) - int(self.y)
                 if step > 0:
                     for i in range(step):
-                        if (self.x, int(self.y) + i + 1) in pixels and pixels[(self.x, int(self.y) + i + 1)].velocity == 0:
-                            self.checkForSpaces(i + 1, pixels, w, key)
+                        next_pos = (self.x, int(self.y) + i + 1)
+                        if next_pos in pixels and (pixels[next_pos].velocity == 0 or pixels[next_pos].sliding):
+                            self.checkForSpaces(i + 1, pixels, w, key, h)
                             return
                 self.y = newY
-                if self.y > h:
+                if self.y >= h:
                     self.velocity = 0
                     self.y = h
-                    print('Pixel has reached the bottom of the screen ' + str(key))
 
-    def checkForSpaces(self, step, pixels, w, key):
-        print('Checking for spaces, pixel at the bottom step :' + str(step))
+    def checkForSpaces(self, step, pixels, w, key, h):
         pixelLoc = int(self.y) + step
-        downLeft = (self.x - 1, pixelLoc) in pixels and pixels[(self.x - 1, pixelLoc)].velocity == 0
-        downRight = (self.x + 1, pixelLoc) in pixels and pixels[(self.x + 1, pixelLoc)].velocity == 0
+        downLeft = (self.x - 1, pixelLoc) in pixels and (pixels[(self.x - 1, pixelLoc)].velocity == 0 or pixels[(self.x - 1, pixelLoc)].sliding)
+        downRight = (self.x + 1, pixelLoc) in pixels and (pixels[(self.x + 1, pixelLoc)].velocity == 0 or pixels[(self.x + 1, pixelLoc)].sliding)
         if not downLeft and not downRight and 1 <= self.x < w:
             self.x += random.choice([1, -1])
             self.y = pixelLoc
-            print('Pixel going down either choices' + str(key))
+            self.sliding = True
+            if self.checkIfShouldStop(pixels, h):
+                self.velocity = 0
         elif not downLeft and self.x >= 1:
             self.x -= 1
             self.y = pixelLoc
-            print('Pixel going down left ' + str(key))
+            self.sliding = True
+            if self.checkIfShouldStop(pixels, h):
+                self.velocity = 0
         elif not downRight and self.x < w:
             self.x += 1
             self.y = pixelLoc
-            print('Pixel going down right ' + str(key))
+            if self.checkIfShouldStop(pixels, h):
+                self.velocity = 0
+            self.sliding = True
         else:
             self.velocity = 0
             self.y = pixelLoc - 1
-            print('Pixel stopping at ' + str(key))
 
     def checkForUpdatedSpaces(self, pixels, w, h):
-        if (self.x, self.y + 1) in pixels and pixels[(self.x, self.y + 1)].velocity == 0:
-            downLeft = (self.x - 1, self.y + 1) in pixels and pixels[(self.x - 1, self.y + 1)].velocity == 0
-            downRight = (self.x + 1, self.y + 1) in pixels and pixels[(self.x + 1, self.y + 1)].velocity == 0
+        below = (self.x, self.y + 1)
+        if below in pixels and pixels[below].velocity == 0:
+            downLeft = (self.x - 1, self.y + 1) in pixels and (pixels[(self.x - 1, self.y + 1)].velocity == 0 or pixels[(self.x - 1, self.y + 1)].sliding)
+            downRight = (self.x + 1, self.y + 1) in pixels and (pixels[(self.x + 1, self.y + 1)].velocity == 0 or pixels[(self.x + 1, self.y + 1)].sliding)
             if not downLeft and not downRight and 1 <= self.x < w:
                 self.x += random.choice([1, -1])
                 self.y += 1
+                self.sliding = True
+                if self.checkIfShouldStop(pixels, h):
+                    self.velocity = 0
             elif not downLeft and self.x >= 1:
                 self.x -= 1
                 self.y += 1
+                self.sliding = True
+                if self.checkIfShouldStop(pixels, h):
+                    self.velocity = 0
             elif not downRight and self.x < w:
                 self.x += 1
                 self.y += 1
-        elif self.y < h :
+                self.sliding = True
+                if self.checkIfShouldStop(pixels, h):
+                    self.velocity = 0
+        elif self.y < h:
             self.velocity = 0.01
+
+    def checkIfShouldStop(self, pixels, h):
+        below = (self.x, int(self.y) + 1)
+        downLeft = (self.x - 1, int(self.y) + 1)
+        downRight = (self.x + 1, int(self.y) + 1)
+        if (below in pixels and pixels[below].velocity == 0 and
+            downLeft in pixels and pixels[downLeft].velocity == 0 and
+            downRight in pixels and pixels[downRight].velocity == 0):
+            return True
+        elif self.y >= h:
+            return True
+        return False
