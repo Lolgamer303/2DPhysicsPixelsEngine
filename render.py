@@ -3,20 +3,23 @@ import numpy as np
 from pixels import Pixel, PixelType
 from time import sleep
 from configparser import ConfigParser
-from typing import Dict, Tuple
+from typing import List
 
-def render(screen: pygame.Surface, pixels: Dict[Tuple[int, int], Pixel], deltaTime: float, runningTime: float):
+def render(screen: pygame.Surface, pixels: List[List[Pixel]], deltaTime: float, runningTime: float):
     obj = ConfigParser()
     obj.read('config.ini')
     pixelsSize = int((obj['PIXEL_SIZE'])['value'])
     w = int((obj['SIZE'])['width'])
     h = int((obj['SIZE'])['height'])
     rainbowMode = True if (obj['RAINBOW_MODE'])['value'] == 'True' else False
-    for key, pixel in pixels.items():
-        pixel.update(deltaTime, pixels, w, h, key)
-        if ((int(pixel.x), int(pixel.y))) in pixels and pixels[(int(pixel.x), int(pixel.y))] is not pixel:
-            raise Exception("Pixel already exists at that location" + str((int(pixel.x), int(pixel.y))))
-        pixels[(int(pixel.x), int(pixel.y))] = pixels.pop(key)
-        pixel.draw(screen, pixelsSize, rainbowMode, runningTime)
-        print(f'key : {key}')
+    for y in range(len(pixels)-1, 0, -1):
+        for x in range(len(pixels[y]) - 1):
+            pixel = pixels[y][x]
+            if pixel is not None:
+                pixel.update(deltaTime, pixels, w, h)
+                pixel.draw(screen, pixelsSize, rainbowMode, runningTime)
+                if pixels[int(pixel.y)][int(pixel.x)] is not pixel and pixels[int(pixel.y)][int(pixel.x)] is not None:
+                    raise Exception(f"Pixel already exists at that location, {int(pixel.x), int(pixel.y)}")
+                pixels[y][x] = None
+                pixels[int(pixel.y)][int(pixel.x)] = pixel
     return pixels

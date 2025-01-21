@@ -1,9 +1,9 @@
+from typing import List
 from pygame import *
 import pygame_gui.ui_manager
 import render
 import pygame
 from pixels import PixelType, Pixel
-from sortedcontainers import SortedDict
 from configparser import ConfigParser
 import pygame_gui
 import time
@@ -14,19 +14,29 @@ def modifySpawnSize(value, config_obj: ConfigParser):
     }
     with open('config.ini', 'w') as conf:
         config_obj.write(conf)
+def pixelModeToggle(config_obj: ConfigParser):
+    config_obj.read("config.ini")
+    config_obj["PIXEL_MODE"] = {
+        'value': 'True' if str(config_obj["PIXEL_MODE"]['value']) == 'False' else 'False',
+    }
+    with open('config.ini', 'w') as conf:
+        config_obj.write(conf)
 
-def modifyPixelSize(value, config_obj: ConfigParser):
+def modifyPixelSize(value, config_obj: ConfigParser, pixels: List[List[Pixel]]):
     config_obj["PIXEL_SIZE"] = {
         'value': str(value),
-    }
+    }    
     w = int(800 / value) - 1
     h = w
+    pixels = None
+    pixels = [[None for _ in range(h+1)] for _ in range(w+1)]
     config_obj['SIZE'] = {
         'width': str(w),
         'height': str(h),
     }
     with open('config.ini', 'w') as conf:
         config_obj.write(conf)
+    return pixels
 def modifyRainbowMode(config_obj: ConfigParser):
     config_obj.read("config.ini")
     config_obj["RAINBOW_MODE"] = {
@@ -44,8 +54,11 @@ def main():
     screen = display.set_mode((1000, 800))
     config_obj = ConfigParser()
     modifySpawnSize(5, config_obj)
-    modifyPixelSize(4, config_obj)
+    modifyPixelSize(4, config_obj, pixels=None)
     config_obj["RAINBOW_MODE"] = {
+        'value': 'False',
+    }
+    config_obj["PIXEL_MODE"] = {
         'value': 'False',
     }
     with open('config.ini', 'w') as conf:
@@ -99,8 +112,13 @@ def main():
         text="Rainbow Mode",
         manager=manager,
     )
+    pixel_mode_toogle = pygame_gui.elements.UIButton(
+        relative_rect=Rect((840, 550), (120, 40)),
+        text="Pixel Mode",
+        manager=manager,
+    )
     
-    pixels = SortedDict(lambda key: (-key[1], key[0]))
+    pixels = [[None for _ in range(200)] for _ in range(200)]
 
     COOLDOWN = 0.05
     def handle_mouse_press(deltaTime: float):
@@ -115,6 +133,9 @@ def main():
         obj.read("config.ini")
         spawn_size = int((obj['SPAWN_SIZE'])['value'])
         pixel_size = int((obj['PIXEL_SIZE'])['value'])
+        w = int((obj['SIZE'])['WIDTH'])
+        h = int((obj['SIZE'])['HEIGHT'])
+        pixel_mode = True if ((obj['PIXEL_MODE'])['value']) == 'True' else False
         if currentTimeCoolDown > COOLDOWN + COOLDOWN / 2 * spawn_size and (mouse.get_pressed()[0]):
             currentTimeCoolDown = 0
             x, y = get_mouse_coords()
@@ -124,7 +145,8 @@ def main():
             y = int(y/pixel_size)
             for i in range(-spawn_size, spawn_size + 1):
                 for j in range(-spawn_size, spawn_size + 1):
-                    pixels[x + i, y + j] = Pixel(x + i , y + j, PixelType.SAND, rainbowHue=(runningTime/12)%1)
+                    if (x+j) >= 0 and (x+j) < w and (y+i) >= 0 and (y+i) < h:
+                        pixels[y + i][x + j] = Pixel(x + j , y + i, PixelType.WATER if pixel_mode else PixelType.SAND, rainbowHue=(runningTime/12)%1)
         elif mouse.get_pressed()[2]:
             x, y = get_mouse_coords()
             if x < 0 or x > 800:
@@ -133,8 +155,9 @@ def main():
             y = int(y/pixel_size)
             for i in range(-spawn_size-2, spawn_size + 2):
                 for j in range(-spawn_size-2, spawn_size + 2):
-                    pixels[(x + i, y + j)] = Pixel(x + i, y + j, PixelType.STONE)
-                    pixels[(x + i, y + j)].velocity = 0
+                    if (x+j) >= 0 and (x+j) < w and (y+i) >= 0 and (y+i) < h:
+                        pixels[y+i][x+j] = Pixel(x + j, y + i, PixelType.STONE)
+                        pixels[y+i][x+j].velocity = 0
     def show_confirmation_dialog():
         return pygame_gui.windows.UIConfirmationDialog(
             rect=Rect((400, 300), (200, 200)),
@@ -168,8 +191,7 @@ def main():
                                 confirmation_dialog = show_confirmation_dialog()
                 elif e.type == pygame_gui.UI_CONFIRMATION_DIALOG_CONFIRMED:
                     if confirmation_dialog is not None:
-                        modifyPixelSize(int(pixel_slider.get_current_value()), config_obj)
-                        pixels.clear()
+                        pixels = modifyPixelSize(int(pixel_slider.get_current_value()), config_obj, pixels=pixels)
                         confirmation_dialog = None
                         previous_pixel_size = pixel_slider.get_current_value()
                 elif e.type == pygame_gui.UI_WINDOW_CLOSE and e.ui_element == confirmation_dialog:
@@ -182,7 +204,9 @@ def main():
                         if paused:
                             next_frame = True
                     elif e.ui_element == rainbowmode_toggle:
-                        modifyRainbowMode(config_obj)                        
+                        modifyRainbowMode(config_obj)  
+                    elif e.ui_element == pixel_mode_toogle:
+                        pixelModeToggle(config_obj)                      
             manager.update(time_delta)
             handle_mouse_press(time_delta)
             screen.fill((20, 20, 20))
