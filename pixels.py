@@ -46,54 +46,64 @@ class Pixel:
 
     def update(self, deltaTime, pixels: Dict[Tuple[int, int], any], w, h, key):
         if self.type == PixelType.SAND:
+            #breakpoint()
             if self.velocity == 0:
                 self.checkForUpdatedSpaces(pixels, w, h)
             else:
                 self.velocity += 9.81 * deltaTime
-                newY = self.y + self.velocity * abs(deltaTime) * 100
+                newY = self.y + self.velocity * deltaTime * 100
                 step = int(newY) - int(self.y)
                 if step > 0:
                     for i in range(step):
                         next_pos = (self.x, int(self.y) + i + 1)
-                        if next_pos in pixels and (pixels[next_pos].velocity == 0 or pixels[next_pos].sliding):
-                            self.checkForSpaces(i + 1, pixels, w, key, h)
+                        if next_pos in pixels:
+                            pixel = pixels[next_pos]# and (pixels[next_pos].velocity == 0 or pixels[next_pos].sliding):
+                            self.checkForSpaces(i + 1, pixels, w, key, h, pixel)
                             return
                 self.y = newY
                 if self.y >= h:
                     self.velocity = 0
+                    print(f'stopping at {self.x}, {self.y}')
+                    print('because y is greater than h')
                     self.y = h
 
-    def checkForSpaces(self, step, pixels, w, key, h):
+    def checkForSpaces(self, step, pixels, w, key, h, pixel):
         pixelLoc = int(self.y) + step
-        downLeft = (self.x - 1, pixelLoc) in pixels and (pixels[(self.x - 1, pixelLoc)].velocity == 0 or pixels[(self.x - 1, pixelLoc)].sliding)
-        downRight = (self.x + 1, pixelLoc) in pixels and (pixels[(self.x + 1, pixelLoc)].velocity == 0 or pixels[(self.x + 1, pixelLoc)].sliding)
+        downLeft = (self.x - 1, pixelLoc) in pixels# and (pixels[(self.x - 1, pixelLoc)].velocity == 0 or pixels[(self.x - 1, pixelLoc)].sliding)
+        downRight = (self.x + 1, pixelLoc) in pixels# and (pixels[(self.x + 1, pixelLoc)].velocity == 0 or pixels[(self.x + 1, pixelLoc)].sliding)
         if not downLeft and not downRight and 1 <= self.x < w:
             self.x += random.choice([1, -1])
             self.y = pixelLoc
             self.sliding = True
             if self.checkIfShouldStop(pixels, h):
                 self.velocity = 0
+                print('because there is no space below')
         elif not downLeft and self.x >= 1:
             self.x -= 1
             self.y = pixelLoc
             self.sliding = True
             if self.checkIfShouldStop(pixels, h):
                 self.velocity = 0
+                print('because there is no space below and right')
         elif not downRight and self.x < w:
             self.x += 1
             self.y = pixelLoc
             if self.checkIfShouldStop(pixels, h):
                 self.velocity = 0
+                print('because there is no space below and left')
             self.sliding = True
+            
         else:
             self.velocity = 0
+            print(f'stopping at {self.x}, {self.y}')
+            print('because there is no space')
             self.y = pixelLoc - 1
 
     def checkForUpdatedSpaces(self, pixels, w, h):
         below = (self.x, self.y + 1)
         if below in pixels and pixels[below].velocity == 0:
-            downLeft = (self.x - 1, self.y + 1) in pixels and (pixels[(self.x - 1, self.y + 1)].velocity == 0 or pixels[(self.x - 1, self.y + 1)].sliding)
-            downRight = (self.x + 1, self.y + 1) in pixels and (pixels[(self.x + 1, self.y + 1)].velocity == 0 or pixels[(self.x + 1, self.y + 1)].sliding)
+            downLeft = (self.x - 1, self.y + 1) in pixels# and (pixels[(self.x - 1, self.y + 1)].velocity == 0 or pixels[(self.x - 1, self.y + 1)].sliding)
+            downRight = (self.x + 1, self.y + 1) in pixels# and (pixels[(self.x + 1, self.y + 1)].velocity == 0 or pixels[(self.x + 1, self.y + 1)].sliding)
             if not downLeft and not downRight and 1 <= self.x < w:
                 self.x += random.choice([1, -1])
                 self.y += 1
@@ -122,6 +132,8 @@ class Pixel:
         if (below in pixels and pixels[below].velocity == 0 and
             downLeft in pixels and pixels[downLeft].velocity == 0 and
             downRight in pixels and pixels[downRight].velocity == 0):
+            print(f'stopping at {self.x}, {self.y}, {self.velocity}')
+            breakpoint()
             return True
         elif self.y >= h:
             return True

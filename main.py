@@ -100,7 +100,7 @@ def main():
         manager=manager,
     )
     
-    pixels = SortedDict(lambda key: (-key[1], -key[0]))
+    pixels = SortedDict(lambda key: (-key[1], key[0]))
 
     COOLDOWN = 0.05
     def handle_mouse_press(deltaTime: float):
@@ -153,7 +153,7 @@ def main():
     next_frame = False  
     runningTime = 0
     while running:
-            start_time = time.time()
+            start_time = time.perf_counter()
             time_delta = clock.tick(120)/1000.0
             for e in event.get():
                 if e.type == QUIT:
@@ -196,7 +196,7 @@ def main():
             manager.draw_ui(screen)
             display.flip()
 
-            end_time = time.time()
+            end_time = time.perf_counter()
             elapsed_time = end_time - start_time
             frame_rate = 1.0 / elapsed_time
             fps_text.html_text = f"<b>{int(frame_rate)} FPS</b>"
