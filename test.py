@@ -7,7 +7,7 @@ test_pixels = [[None for _ in range(200)] for _ in range(200)]
 for i in range(2):
     for j in range(2):
         print(f'Creating pixel at {j + 6}, {i+1}')
-        test_pixels[i+1][j + 6] = pixels.Pixel(j+6, i+1, pixels.PixelType.SAND)
+        test_pixels[i+1][j + 6] = pixels.Pixel(j+6, i+1, pixels.PixelType.WATER)
 
 while True:
     for y in range(len(test_pixels)-1, 0, -1):

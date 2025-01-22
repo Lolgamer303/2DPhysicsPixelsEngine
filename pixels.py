@@ -3,7 +3,7 @@ import pygame
 import enum
 import random
 import colorsys
-from typing import Dict, List, Tuple
+from typing import List
 
 class PixelType(enum.Enum):
     def __new__(cls, *args, **kwds):
@@ -29,7 +29,6 @@ class Pixel:
         self.type: PixelType = type
         self.velocity: float = 0.01
         self.rainbowHue: float = rainbowHue
-        self.sliding: bool = False
 
     def draw(self, screen, size=1, rainbowMode=False, runningTime=0):
         if rainbowMode:
@@ -41,8 +40,10 @@ class Pixel:
                 rgb = colorsys.hls_to_rgb((runningTime / 10) % 1, 0.5, 1.0)
                 rgb = tuple(int(c * 255) for c in rgb)
             pygame.draw.rect(screen, rgb, (self.x * size, self.y * size, size, size))
+            #pygame.draw.circle(screen, rgb, (int(self.x * size), int(self.y * size)), size)
         else:
             pygame.draw.rect(screen, (self.type.r, self.type.g, self.type.b), (self.x * size, self.y * size, size, size))
+            #pygame.draw.circle(screen, (self.type.r, self.type.g, self.type.b), (int(self.x * size), int(self.y * size)), size)
 
     def update(self, deltaTime, pixels: List[List[any]], w, h):
         if self.type == PixelType.SAND:
@@ -50,14 +51,29 @@ class Pixel:
                 if self.y < h:
                     self.checkForUpdatedSpaces(pixels, w, h)
             else:
-                self.velocity += 9.81 * deltaTime
-                newY = self.y + self.velocity * deltaTime * 100
+                newY = (0.5 * 9.81 * deltaTime**2 + self.velocity * deltaTime + self.y/100) * 100
+                self.velocity = 9.81 * deltaTime + self.velocity
                 step = int(newY) - int(self.y)
-                if step > 0:
-                    for i in range(step):
-                        if int(self.y) + i + 1 <= h and pixels[int(self.y) + i + 1][self.x] is not None:
-                            self.checkForSpaces(i + 1, pixels, w, h)
-                            return
+                for i in range(step):
+                    if int(self.y) + i + 1 <= h and pixels[int(self.y) + i + 1][self.x] is not None:
+                        self.checkForSpaces(i + 1, pixels, w, h)
+                        return
+                self.y = newY
+                if self.y >= h:
+                    self.velocity = 0
+                    self.y = h
+        elif self.type == PixelType.WATER:
+            if self.velocity == 0:
+                if self.y < h:
+                    self.checkForUpdatedSpaces(pixels, w, h)
+            else:
+                newY = (0.5 * 9.81 * deltaTime**2 + self.velocity * deltaTime + self.y/100) * 100
+                self.velocity = 9.81 * deltaTime + self.velocity
+                step = int(newY) - int(self.y)
+                for i in range(step):
+                    if int(self.y) + i + 1 <= h and pixels[int(self.y) + i + 1][self.x] is not None:
+                        self.waterCheckForSpaces(i + 1, pixels, w, h)
+                        return
                 self.y = newY
                 if self.y >= h:
                     self.velocity = 0
@@ -65,8 +81,8 @@ class Pixel:
 
     def checkForSpaces(self, step, pixels, w, h):
         pixelLoc = int(self.y) + step
-        downLeft = pixels[pixelLoc][self.x-1] is not None # and (pixels[(self.x - 1, pixelLoc)].velocity == 0 or pixels[(self.x - 1, pixelLoc)].sliding)
-        downRight = pixels[pixelLoc][self.x+1] is not None # and (pixels[(self.x + 1, pixelLoc)].velocity == 0 or pixels[(self.x + 1, pixelLoc)].sliding)
+        downLeft = pixels[pixelLoc][self.x-1] is not None
+        downRight = pixels[pixelLoc][self.x+1] is not None
         if not downLeft and not downRight and 1 <= self.x < w:
             self.x += random.choice([1, -1])
             self.y = pixelLoc
@@ -92,8 +108,8 @@ class Pixel:
 
     def checkForUpdatedSpaces(self, pixels, w, h):
         if  pixels[self.y + 1][self.x] is not None and pixels[self.y + 1][self.x].velocity == 0:
-            downLeft = pixels[self.y + 1][self.x - 1] # and (pixels[(self.x - 1, self.y + 1)].velocity == 0 or pixels[(self.x - 1, self.y + 1)].sliding)
-            downRight = pixels[self.y + 1][self.x + 1] # and (pixels[(self.x + 1, self.y + 1)].velocity == 0 or pixels[(self.x + 1, self.y + 1)].sliding)
+            downLeft = pixels[self.y + 1][self.x - 1]
+            downRight = pixels[self.y + 1][self.x + 1]
             if not downLeft and not downRight and 1 <= self.x < w:
                 self.x += random.choice([1, -1])
                 self.y += 1
@@ -131,3 +147,50 @@ class Pixel:
         elif self.y >= h:
             return True
         return False
+    def waterCheckForSpaces(self, pixels, w, h, step):
+        pixelLoc = int(self.y) + step
+        if pixelLoc >= h:
+            self.velocity = 0
+            self.y = h
+            print('pixel loc too high')
+            return
+        if pixels[pixelLoc][self.x].type == PixelType.WATER:
+            if pixels[pixelLoc][self.x].makePlace(pixels, w):
+                self.y = pixelLoc
+                print('made place')
+                return
+            else:
+                self.velocity = 0
+                self.y = pixelLoc - 1
+                print('made place but false')
+                return
+        print('CHECKED FOR Spaces')
+        self.checkForSpaces(step, pixels, w, h)
+    def makePlace(self, pixels, w):
+        n = random.choice([1, -1])
+        if not self.x - n < 0 and not self.x - n > w:
+            firstPixel = pixels[self.y][ self.x - n]
+            if firstPixel is None:
+                pixels[self.y][self.x] = None
+                pixels[self.y][self.x - 1] = self
+                self.x -= 1
+                return True
+            elif firstPixel.type == PixelType.WATER:
+                if firstPixel.makePlace(pixels, w):
+                    pixels[self.y][self.x] = None
+                    pixels[self.y][self.x - 1] = self
+                    self.x -= 1
+        if not self.x + n < 0 and not self.x + n > w:
+            secondPixel = pixels[self.y][ self.x + n]
+            if secondPixel is None:
+                pixels[self.y][self.x] = None
+                pixels[self.y][self.x + 1] = self
+                self.x += 1
+                return True
+            elif secondPixel.type == PixelType.WATER:
+                if secondPixel.makePlace(pixels, w):
+                    pixels[self.y][self.x] = None
+                    pixels[self.y][self.x + 1] = self
+                    self.x += 1
+        return False
+                
