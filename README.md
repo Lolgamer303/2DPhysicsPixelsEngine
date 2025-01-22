@@ -4,7 +4,7 @@
 The 2D Physics Pixels Engine is a Python-based project designed to simulate 2D physics interactions between pixels. This small engine was made for entertainment and most of all to learn python. It is free to use and can simulate interactions between sand and rock, with water simulation **coming soon**. This is a cool personal project that took me a long time to get the programm realistic while maintaining relatively good performance, even though the whole project should ideally be GPU-based instead of CPU.
 
 ## Demo
-you can see a little demo video of this project [here]{https://youtu.be/ZWeYvej_G5M}
+you can see a little demo video of this project [here](https://youtu.be/ZWeYvej_G5M)
 
 ## Installation
 To install the necessary dependencies, run:
