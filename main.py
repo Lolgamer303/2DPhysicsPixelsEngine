@@ -1,12 +1,25 @@
+# /// script
+# dependencies = [
+#  "pytmx",
+#  "i18n",
+#  "numpy",
+# ]
+# ///
+
+import sys
+import os
+sys.path.append(os.path.dirname(__file__))
+
 from typing import List
 from pygame import *
 import pygame_gui.ui_manager
-import render
+from render import render
 import pygame
 from pixels import PixelType, Pixel
 from configparser import ConfigParser
 import pygame_gui
 import time
+import asyncio
 
 def modifySpawnSize(value, config_obj: ConfigParser):
     config_obj["SPAWN_SIZE"] = {
@@ -49,7 +62,7 @@ def get_mouse_coords():
     x, y = mouse.get_pos()
     return x, y
 
-def main():
+async def main():
     init()
     screen = display.set_mode((1000, 800))
     config_obj = ConfigParser()
@@ -215,7 +228,7 @@ def main():
             if next_frame and paused:
                 time_delta = clock.tick(120)/1000.0
                 next_frame = False
-            render.render(screen, pixels=pixels, deltaTime=time_delta, runningTime=runningTime)
+            render(screen, pixels=pixels, deltaTime=time_delta, runningTime=runningTime)
             screen.fill((40, 40, 40), Rect(800, 0, 200, 800))
             manager.draw_ui(screen)
             display.flip()
@@ -225,7 +238,8 @@ def main():
             frame_rate = 1.0 / elapsed_time
             fps_text.html_text = f"<b>{int(frame_rate)} FPS</b>"
             fps_text.rebuild()
+            await asyncio.sleep(0)
     quit()
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
