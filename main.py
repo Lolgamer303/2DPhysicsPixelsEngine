@@ -37,7 +37,7 @@ def modifyPixelSize(value, config_obj: ConfigParser, pixels: List[List[Pixel]]):
     w = int(800 / value) - 1
     h = w
     pixels = None
-    pixels = [[None for _ in range(h+1)] for _ in range(w+1)]
+    pixels = [[None for _ in range(h+2)] for _ in range(w+2)]
     config_obj['SIZE'] = {
         'width': str(w),
         'height': str(h),
@@ -62,7 +62,7 @@ async def main():
     screen = display.set_mode((1000, 800))
     config_obj = ConfigParser()
     modifySpawnSize(5, config_obj)
-    modifyPixelSize(4, config_obj, pixels=None)
+    pixels = modifyPixelSize(4, config_obj, pixels=None)
     config_obj["RAINBOW_MODE"] = {
         'value': 'False',
     }
@@ -126,8 +126,6 @@ async def main():
         manager=manager,
     )
     
-    pixels = [[None for _ in range(200)] for _ in range(200)]
-
     COOLDOWN = 0.05
     def handle_mouse_press(deltaTime: float):
         nonlocal currentTimeCoolDown
@@ -146,14 +144,14 @@ async def main():
         pixel_mode = True if ((obj['PIXEL_MODE'])['value']) == 'True' else False
         if currentTimeCoolDown > COOLDOWN + COOLDOWN / 2 * spawn_size and (mouse.get_pressed()[0]):
             currentTimeCoolDown = 0
-            x, y = get_mouse_coords()
-            if x < 0 or x > 800:
+            rawX, rawY = get_mouse_coords()
+            if rawX < 0 or rawX > 800:
                 return
-            x = int(x/pixel_size)
-            y = int(y/pixel_size)
+            x = int(rawX/pixel_size)
+            y = int(rawY/pixel_size)
             for i in range(-spawn_size, spawn_size + 1):
                 for j in range(-spawn_size, spawn_size + 1):
-                    if (x+j) >= 0 and (x+j) < w and (y+i) >= 0 and (y+i) < h:
+                    if (x+j) >= 0 and (x+j) <= (w+1) and (y+i) >= 0 and (y+i) <= (h+1):
                         pixels[y + i][x + j] = Pixel(x + j , y + i, PixelType.WATER if pixel_mode else PixelType.SAND, rainbowHue=(runningTime/12)%1)
         elif mouse.get_pressed()[2]:
             x, y = get_mouse_coords()
@@ -163,7 +161,7 @@ async def main():
             y = int(y/pixel_size)
             for i in range(-spawn_size-2, spawn_size + 2):
                 for j in range(-spawn_size-2, spawn_size + 2):
-                    if (x+j) >= 0 and (x+j) < w and (y+i) >= 0 and (y+i) < h:
+                    if (x+j) >= 0 and (x+j) <= (w+1) and (y+i) >= 0 and (y+i) <= (h+1):
                         pixels[y+i][x+j] = Pixel(x + j, y + i, PixelType.STONE)
                         pixels[y+i][x+j].velocity = 0
     def show_confirmation_dialog():
