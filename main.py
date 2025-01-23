@@ -2,7 +2,6 @@
 # dependencies = [
 #  "pytmx",
 #  "i18n",
-#  "numpy",
 # ]
 # ///
 

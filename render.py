@@ -1,5 +1,4 @@
 import pygame
-import numpy as np
 from pixels import Pixel, PixelType
 from time import sleep
 from configparser import ConfigParser

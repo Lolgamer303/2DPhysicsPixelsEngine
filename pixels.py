@@ -27,7 +27,7 @@ class Pixel:
         self.x: float = x
         self.y: float = y
         self.type: PixelType = type
-        self.velocity: float = 0.01
+        self.velocity: float = 0.0001
         self.rainbowHue: float = rainbowHue
 
     def draw(self, screen, size=1, rainbowMode=False, runningTime=0):
@@ -71,8 +71,9 @@ class Pixel:
                 self.velocity = 9.81 * deltaTime + self.velocity
                 step = int(newY) - int(self.y)
                 for i in range(step):
+                    print(i)
                     if int(self.y) + i + 1 <= h and pixels[int(self.y) + i + 1][self.x] is not None:
-                        self.waterCheckForSpaces(i + 1, pixels, w, h)
+                        self.waterCheckForSpaces(step=i+1, w=w, h=h, pixels=pixels)
                         return
                 self.y = newY
                 if self.y >= h:
