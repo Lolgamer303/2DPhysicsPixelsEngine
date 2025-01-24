@@ -17,7 +17,7 @@ def render(screen: pygame.Surface, pixels: List[List[Pixel]], deltaTime: float, 
             if pixel is not None and not pixel.type == PixelType.STONE:
                 pixel.update(deltaTime, pixels, w, h)
                 pixel.draw(screen, pixelsSize, rainbowMode, runningTime)
-                if pixels[int(pixel.y)][int(pixel.x)] is not pixel and pixels[int(pixel.y)][int(pixel.x)] is not None and pixels[int(pixel.y)][int(pixel.x)].type is not PixelType.WATER:
+                if pixels[int(pixel.y)][int(pixel.x)] is not pixel and pixels[int(pixel.y)][int(pixel.x)] is not None: #and pixels[int(pixel.y)][int(pixel.x)].type is not PixelType.WATER:
                     print(f"Pixel already exists at that location, {int(pixel.x), int(pixel.y)}")
                 pixels[y][x] = None
                 pixels[int(pixel.y)][int(pixel.x)] = pixel

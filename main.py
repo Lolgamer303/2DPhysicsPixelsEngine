@@ -33,7 +33,7 @@ def pixelModeToggle(config_obj: ConfigParser):
 def modifyPixelSize(value, config_obj: ConfigParser, pixels: List[List[Pixel]]):
     config_obj["PIXEL_SIZE"] = {
         'value': str(value),
-    }    
+    }
     w = int(800 / value) - 1
     h = w
     pixels = None
@@ -142,7 +142,7 @@ async def main():
         w = int((obj['SIZE'])['WIDTH'])
         h = int((obj['SIZE'])['HEIGHT'])
         pixel_mode = True if ((obj['PIXEL_MODE'])['value']) == 'True' else False
-        if currentTimeCoolDown > COOLDOWN + COOLDOWN / 2 * spawn_size and (mouse.get_pressed()[0]):
+        if (pixel_mode or currentTimeCoolDown > COOLDOWN + COOLDOWN / 2 * spawn_size) and (mouse.get_pressed()[0]):
             currentTimeCoolDown = 0
             rawX, rawY = get_mouse_coords()
             if rawX < 0 or rawX > 800:
