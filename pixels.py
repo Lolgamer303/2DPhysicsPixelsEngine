@@ -1,4 +1,3 @@
-import numpy as np
 import pygame
 import enum
 import random
@@ -29,7 +28,7 @@ class Pixel:
         self.x: float = x
         self.y: float = y
         self.type: PixelType = type
-        self.velocity: float = 0.0001
+        self.velocity: float = 0.001
         self.rainbowHue: float = rainbowHue
 
     def draw(self, screen, size=1, rainbowMode=False, runningTime=0):
@@ -113,7 +112,7 @@ class Pixel:
             self.y = pixelLoc - 1
 
     def checkForUpdatedSpaces(self, pixels, w, h):
-        if pixels[self.y + 1][self.x] is not None and pixels[self.y + 1][self.x].type is not PixelType.WATER and pixels[self.y + 1][self.x].velocity == 0:
+        if pixels[self.y + 1][self.x] is not None and pixels[self.y + 1][self.x].velocity == 0:
             downLeft = pixels[self.y + 1][self.x - 1]
             downRight = pixels[self.y + 1][self.x + 1]
             if not downLeft and not downRight and 1 <= self.x < w:
@@ -179,7 +178,6 @@ class Pixel:
         self.checkForSpaces(step, pixels, w, h)
 
     def makePlace(self, pixels, w, pixelLoc):
-        print('made place')
         n = random.choice([1, -1])
         stop = False
         firstDirection = True
